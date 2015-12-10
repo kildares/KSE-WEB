@@ -11038,6 +11038,18 @@ joint.shapes.uml.Association = joint.dia.Link.extend({
     }
 });
 
+/*joint.shapes.uml.AssociationClass = joint.shapes.uml.Class.extend({
+   defaults:{
+       type: 'uml.AssociationClass',
+       link: joint.shapes.uml.Association({
+            
+        }),
+        
+       
+    }
+    
+}};*/
+
 // Statechart
 
 joint.shapes.uml.State = joint.shapes.basic.Generic.extend({

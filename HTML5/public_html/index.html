@@ -18,6 +18,18 @@ and open the template in the editor.
     <script src="./js/joint.js"></script>
 </head>
 <body>
+    
+    <br/>
+  <button id="deleteButton" onclick="verificaDeleteButton()"> DELETAR </button>
+  <button id="classButton" onclick="generateElement('class')"> CLASSE </button>
+  <button id="abstractButton" onclick="generateElement('abstract')"> CLASSE ABSTRATA </button>
+  <button id="interfaceButton" onclick="generateElement('interface')"> INTERFACE </button>
+  <button id="associationButton" onclick="selectLink('association')"> ASSOCIAÇÃO </button> 
+  <button id="generalizationButton" onclick="selectLink('generalization')"> GENERALIZAÇÃO </button>
+  <button id="aggregationButton" onclick="selectLink('aggregation')"> AGREGAÇÃO </button>
+  <button id="compositionButton" onclick="selectLink('composition')"> COMPOSIÇÃO </button>
+  <button id="compositionButton" onclick="selectLink('implementation')"> IMPLEMENTAÇÃO </button>
+  <br/> <br/>
   <div id="myholder"></div>
   
   <script type="text/javascript">
@@ -31,13 +43,18 @@ and open the template in the editor.
     
     var paper = new joint.dia.Paper({
         el: $('#myholder'),
-        width: 800,
+        width: 1280,
         height: 600,
         model: graph,
         gridSize: 1
     });
- 
-    
+ /*
+    var deleteButton = new joint.shapes.basic.Rect({
+        position: { x: 0, y: 10 },
+        size: { width: 100, height: 30 },
+        attrs: { rect: { fill: 'grey' }, text: { text: 'Delete', fill: 'white' } }
+    });
+
     var classButton = new joint.shapes.basic.Rect({
         position: { x: 100, y: 10 },
         size: { width: 100, height: 30 },
@@ -73,7 +90,7 @@ and open the template in the editor.
         size: { width: 100, height: 30 },
         attrs: { rect: { fill: 'grey' }, text: { text: 'Composition', fill: 'white' } }
     });
-    
+   */ 
     //armazena o status do link
     //0 - O botão de link não foi clicado
     //1 - Aguardando selecionar o primeiro objeto
@@ -89,210 +106,257 @@ and open the template in the editor.
     arrayLinkElements=[];
     //boxElement selecionado
     selectedElement=0;
+    selectedElementView=0;
     
-    
-    var toolbar = [classButton,abstractButton,interfaceButton,associationButton,generalizationButton,aggregationButton,compositionButton];
+    deleteButtonSelected=0;
+    /*
+    var toolbar = [deleteButton,classButton,abstractButton,interfaceButton,associationButton,generalizationButton,aggregationButton,compositionButton];
     for(var i=0;i<toolbar.length;i++){
             graph.addCells([toolbar[i]]);
     }
-    
+    */
    
     
     //1.---------------- Funcoes que criam os elementos ficam abaixo --------------------
     
     
-    //Esta funcao valida se o link sera gerado em elementos validos
-    function validateLinks(cellView){
-        //Se foi a segunda selecao, deve salvar o element id
-        if(linkStatus===1){
-            linkElement = cellView.model;
-            linkStatus++;
-        }
-        //Se foi a terceira selecao e a associacao tiver sido selecionada, deve criar a instancia do link
-        else if(linkStatus===2&&linkSelected==="association"){
-            //Verifica se os links são válidos:
-            if(arrayBoxElements.indexOf(cellView.model)==-1||arrayBoxElements.indexOf(linkElement)==-1){
-                linkElement=0;
-                linkStatus=0;
-                return false;
-            }
-            
-            
-            var link = new joint.shapes.uml.Association({
-                source: { id: linkElement.id  },
-                target: { id: cellView.model.id }
-            });
-            //link.cardinality(3);
-            arrayLinkElements.push(link);
-            graph.addCells([link]);
-            linkStatus=0;
-            linkElement=0;
-            return true;
-        }
-        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
-        else if(linkStatus===2&&linkSelected==="generalization"){
-            //Verifica se os links são válidos:
-            if(arrayBoxElements.indexOf(cellView.model)==-1||arrayBoxElements.indexOf(linkElement)==-1){
-                linkElement=0;
-                linkStatus=0;
-                return false;
-            }
-            
-            
-            var link = new joint.shapes.uml.Generalization({
-                source: { id: linkElement.id  },
-                target: { id: cellView.model.id }
-            });
-            //link.cardinality(3);
-            arrayLinkElements.push(link);
-            graph.addCells([link]);
-            linkStatus=0;
-            linkElement=0;
-            return true;
-        }
-        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
-        else if(linkStatus===2&&linkSelected==="aggregation"){
-            //Verifica se os links são válidos:
-            if(arrayBoxElements.indexOf(cellView.model)==-1||arrayBoxElements.indexOf(linkElement)==-1){
-                linkElement=0;
-                linkStatus=0;
-                return false;
-            }
-            
-            
-            var link = new joint.shapes.uml.Aggregation({
-                source: { id: linkElement.id  },
-                target: { id: cellView.model.id }
-            });
-            //link.cardinality(3);
-            arrayLinkElements.push(link);
-            graph.addCells([link]);
-            linkStatus=0;
-            linkElement=0;
-            return true;
-        }
-        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
-        else if(linkStatus===2&&linkSelected==="composition"){
-            //Verifica se os links são válidos:
-            if(arrayBoxElements.indexOf(cellView.model)==-1||arrayBoxElements.indexOf(linkElement)==-1){
-                linkElement=0;
-                linkStatus=0;
-                return false;
-            }
-            
-            
-            var link = new joint.shapes.uml.Composition({
-                source: { id: linkElement.id  },
-                target: { id: cellView.model.id }
-            });
-            //link.cardinality(3);
-            arrayLinkElements.push(link);
-            graph.addCells([link]);
-            linkStatus=0;
-            linkElement=0;
-            return true;
-        }
-        
-        
-    }
+    paper.on('blank:pointerdown ',function(cellView,evt,x,y){
     
-    
-    
-    //Esta funcao gera a instancia dos elementos do diagrama
-    function generateElements(cellView){
-        if(cellView.model.id === classButton.id){
-            
-            var genClass = new joint.shapes.uml.Class({
-                position: { x: 200, y:100 },
-                size: { width: 100, height: 100 },
-                name: 'my Class'
-            });
-            //Adiciona a nova classe a lista de elementos retangulares
-            arrayBoxElements.push(genClass);
-            graph.addCells([genClass]);
-        }
-        
-        else if(cellView.model.id === abstractButton.id){
-            
-            var genClass = new joint.shapes.uml.Abstract({
-                position: { x:300  , y: 300 },
-                 size: { width: 100, height: 100 },
-                 name: 'my Abstract Class'
-            });
-            //Adiciona a nova classe a lista de elementos retangulares
-            arrayBoxElements.push(genClass);
-            graph.addCells([genClass]);
-        }
-        
-        else if(cellView.model.id === interfaceButton.id){
-            
-            var genClass = new joint.shapes.uml.Interface({
-               position: { x:300  , y: 50 },
-               size: { width: 100, height: 100 },
-               name: 'new Interface'
-            });
-            //Adiciona a nova classe a lista de elementos retangulares
-            arrayBoxElements.push(genClass);
-            graph.addCells([genClass]);
-        }
-        
-        else if(cellView.model.id === associationButton.id){    
-            //Se foi a primeira selecao, deve trocar o status do Link e preparar para a troca
-            if(linkStatus===0)
-                linkStatus++;
-            else
-                linkStatus=1;
-            linkSelected="association";
-            
-        }
-        else if(cellView.model.id === generalizationButton.id){    
-            //Se foi a primeira selecao, deve trocar o status do Link e preparar para a troca
-            if(linkStatus===0)
-                linkStatus++;
-            else
-                linkStatus=1;
-            linkSelected="generalization";
-        }
-        else if(cellView.model.id === aggregationButton.id){    
-            //Se foi a primeira selecao, deve trocar o status do Link e preparar para a troca
-            if(linkStatus===0)
-                linkStatus++;
-            else
-                linkStatus=1;
-            linkSelected="aggregation";
-        }
-        else if(cellView.model.id === compositionButton.id){    
-            //Se foi a primeira selecao, deve trocar o status do Link e preparar para a troca
-            if(linkStatus===0)
-                linkStatus++;
-            else
-                linkStatus=1;
-            linkSelected="composition";
-        }
-        
-    }
+       //Quando o usuario clica no vazio, deseleciona o elemento
+       if(selectedElement!==0){
+           selectedElementView.unhighlight([selectedElement]);
+           selectedElementView=0;
+           selectedElement=0;
+       }
+       updatePropertiesToolbar(0);
+    });
     
     
     paper.on('cell:pointerdblclick',function(cellView,evt,x,y){
         
-        selectedElement=cellView.model;
+
+        for(var i=0;i<arrayBoxElements.length;i++){
+            if(arrayBoxElements[i].id===cellView.model.id)
+            {
+                if(selectedElementView!==0)
+                    selectedElementView.unhighlight([selectedElement]);
+                
+                cellView.highlight([cellView.model]);
+                selectedElement=cellView.model;
+                selectedElementView = cellView;
+            }
+        }
+  
         updatePropertiesToolbar(cellView);
     });
     
-
     paper.on('cell:pointerclick',function(cellView,evt,x,y){
         
-        //Se a validacao de links falhou, verifica se deve gerar novos elementos
-        if(linkStatus!==0)
-            validateLinks(cellView);
-        else
-            generateElements(cellView);
-        
-        //console.log(cellView.model);
-        
+        validateLinks(cellView);
+        deleteElements(cellView);
     });
-    
 
+    
+    
+    
+    //Esta funcao valida se o link sera gerado em elementos validos
+    function validateLinks(cellView){
+        
+        if(linkStatus===0)
+            return;
+        //Se foi a segunda selecao, deve salvar o element id
+        if(linkStatus===1){
+            linkElement = cellView.model;
+            linkStatus++;
+            return;
+        }
+            
+        //Verifica se os links são válidos:
+        //if(arrayBoxElements.indexOf(cellView.model)==-1||arrayBoxElements.indexOf(linkElement)==-1){
+        //    linkElement=0;
+        //    linkStatus=0;
+        //    return false;
+        //}
+        
+        var link;
+        
+        //Se foi a terceira selecao e a associacao tiver sido selecionada, deve criar a instancia do link
+        if(linkStatus===2&&linkSelected==="association"){
+        
+        
+            if(linkElement.get('type')==='uml.Interface'||cellView.model.get('type')==='uml.Interface')
+                return;
+        
+        
+            link = new joint.shapes.uml.Association({
+                source: { id: linkElement.id  },
+                target: { id: cellView.model.id }
+            });
+            
+            //TODO: CONFIGURAR OS LABELS
+            link.label(0,{
+               position: .5,
+               attrs:{
+                   rect:{ fill: 'white' },
+                   text:{ fill: 'blue', text: 'my label' }
+               }
+            });
+
+            if(linkElement.id===cellView.model.id){
+                var pos = cellView.model.get('position');
+                link.set('vertices',[{x:pos.x+50, y: pos.y-50},{x:pos.x+150, y: pos.y-50},{x:pos.x+150, y: pos.y+50}]);
+            }
+            //link.cardinality(3);
+            
+            
+        }
+        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
+        else if(linkStatus===2&&linkSelected==="generalization"){
+            
+            //Valida se os elementos que se deseja conectar são válidos.
+            console.log(linkElement.get('type'));
+            console.log(cellView.model.get('type'));
+            if(linkElement.id===cellView.model.id||(linkElement.get('type')==='uml.Class'&&cellView.model.get('type')==='uml.Interface')||
+                    (linkElement.get('type')==='uml.Interface'&&cellView.model.get('type')==='uml.Class')||
+                    (linkElement.get('type')==='uml.Abstract'&&cellView.model.get('type')==='uml.Interface')||
+                    (linkElement.get('type')==='uml.Interface'&&cellView.model.get('type')==='uml.Abstract')||
+                    (linkElement.get('type')==='uml.Abstract'&&cellView.model.get('type')==='uml.Class'))
+                return;
+            
+            link = new joint.shapes.uml.Generalization({
+                source: { id: linkElement.id  },
+                target: { id: cellView.model.id }
+            });
+            
+        }
+        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
+        else if(linkStatus===2&&linkSelected==="aggregation"){
+        
+            //Valida se os elementos que se deseja conectar são válidos
+            if(linkElement.get('type')==='uml.Interface'||cellView.model.get('type')==='uml.Interface')
+                return;
+        
+            link = new joint.shapes.uml.Aggregation({
+                source: { id: linkElement.id  },
+                target: { id: cellView.model.id }
+            });
+        }
+        //Se foi a terceira selecao e a generalizacao tiver sido selecionada, deve criar a instancia do link
+        else if(linkStatus===2&&linkSelected==="composition"){
+            
+            //Valida se os elementos que se deseja conectar são válidos
+            if(linkElement.get('type')==='uml.Interface'||cellView.model.get('type')==='uml.Interface')
+                return;
+            
+            link = new joint.shapes.uml.Composition({
+                source: { id: linkElement.id  },
+                target: { id: cellView.model.id }
+            });
+        }
+        //TODO: IMPLEMENTAR REALIZACAO
+        else if(linkStatus===2&&linkSelected==="implementation"){
+            
+            if(linkElement.get('type')!=='uml.Interface'||cellView.model.get('type')==='uml.Interface')
+                return;
+            
+            link = new joint.shapes.uml.Implementation({
+                source: { id: linkElement.id  },
+                target: { id: cellView.model.id }
+            });
+        }
+        
+        arrayLinkElements.push(link);
+        graph.addCells([link]);
+        linkStatus=0;
+        linkElement=0;
+        return true;
+        
+    }
+    
+    
+    //Esta funcao gera a instancia dos elementos do diagrama
+    
+    function generateElement(elementType){
+        var element;
+        if(elementType==="class"){
+            element= new joint.shapes.uml.Class({
+                position: { x: 200, y:100 },
+                size: { width: 100, height: 100 },
+                name: 'my Class'
+            });
+        }
+        if(elementType==="interface"){
+            element= new joint.shapes.uml.Interface({
+                position: { x: 200, y:100 },
+                size: { width: 100, height: 100 },
+                name: 'my Class'
+            });
+        }
+        if(elementType==="abstract"){
+            element= new joint.shapes.uml.Abstract({
+                position: { x: 200, y:100 },
+                size: { width: 100, height: 100 },
+                name: 'my Class'
+            });
+        }
+        
+        
+        arrayBoxElements.push(element);
+        graph.addCells([element]);
+        
+    }
+    function selectLink(linkType){
+            //Se foi a primeira selecao, deve trocar o status do Link e preparar para a troca
+        linkStatus = 1;
+        linkSelected=linkType;        
+    }
+    
+    
+    function verificaDeleteButton(){
+        
+        deleteButtonSelected = deleteButtonSelected===0? 1 : 0;
+        document.getElementById("deleteButton").innerHTML = deleteButtonSelected===0 ? "DELETE" : "MOVE";
+        
+        console.log(deleteButtonSelected);
+     
+    }
+    //TODO Terminar esta funcionalidade
+    //Esta funcaio deleta o elemento clicado no diagrama, caso haja
+    function deleteElements(cellView){
+
+    
+        if(deleteButtonSelected===0)
+            return;
+
+        //Percorre o arrayBoxElements
+                
+        for(var i=0;i<arrayBoxElements.length;i++){
+            //Caso tenha clicado num elemento deste vetor, deve elimina-lo
+            if(cellView.model.id===arrayBoxElements[i].id){
+                //Verifica se este elemento esta na lista de links, caso esteja, elimina o link
+                for(var j=0;j<arrayLinkElements.length;j++){
+                    if(cellView.model.id === arrayLinkElements[j].attributes.source.id || cellView.model.id === arrayLinkElements[i].attributes.target.id){
+                        var elem = arrayLinkElements[j];
+                        arrayLinkElements.splice(j,1);
+                        elem.remove(elem);
+                    }
+                }
+                //TODO: Remove o model do vetor arrayBoxElements        
+                arrayBoxElements.splice(i,1);
+                cellView.model.remove(cellView.model);
+                return 1;
+            }
+        }
+        for(var j=0;j<arrayLinkElements.length;j++){
+            if(cellView.model.id === arrayLinkElements[j].id){
+                arrayLinkElements.splice(j,1);
+                cellView.model.remove(cellView.model);
+                return 1;
+            }
+        }
+        return 0;
+    }
+    
     //----------- Funcoes que envolvem a contextToolbar ficam abaixo -----------
     
     //Esta funcao exibe os elementos de criacao de novo metodo e novo atributo na tela
@@ -320,27 +384,52 @@ and open the template in the editor.
         //Adiciona o nome da classe
         var nameText = document.getElementById("nameText");
         //console.log(Element.model.defaults.type);
-        if(Element.model.defaults.type==="uml.Class")
+       
+        //Caso o usuario tenha clicado no espaco vazio, limpa os valores.
+        if(Element===0){
+            nameText.value="";
+            document.getElementById("selectAtt").innerHTML="";
+            var mtdSelect = document.getElementById("selectMtd").innerHTML="";
+        }
+         //Carrega os metodos e atributos da classe
+        else if(Element.model.defaults.type==="uml.Class"){
             nameText.value= Element.model.getClassName();
-        else
-            nameText.value= Element.model.getClassName()[1];
-        //Atualiza a lista de atributos
-        var attSelect = document.getElementById("selectAtt");
-        var attributes = Element.model.getAttributes();
-        for(var i=0;i<attributes.length;i++){
-            var opt = document.createElement("option");
-            opt.text=attributes[i];
-            attSelect.add(opt);
+            var attSelect = document.getElementById("selectAtt");
+            var attributes = Element.model.getAttributes();
+            attSelect.innerHTML="";
+            for(var i=0;i<attributes.length;i++){
+                var opt = document.createElement("option");
+                opt.text=attributes[i];
+                attSelect.add(opt);
+            }
+            
+            //Atualiza a lista de metodos
+            var mtdSelect = document.getElementById("selectMtd");
+            var methods = Element.model.getMethods();
+            mtdSelect.innerHTML="";
+            for(var i=0;i<methods.length;i++){
+                var opt = document.createElement("option");
+                opt.text=methods[i];
+            mtdSelect.add(opt);
+            }
+            
         }
         
-        //Atualiza a lista de metodos
-        var mtdSelect = document.getElementById("selectMtd");
-        var methods = Element.model.getAttributes();
-        for(var i=0;i<methods.length;i++){
-            var opt = document.createElement("option");
-            opt.text=methods[i];
-           mtdSelect.add(opt);
+        
+        else{
+            nameText.value= Element.model.getClassName()[1];
+            //Atualiza a lista de metodos
+            var mtdSelect = document.getElementById("selectMtd");
+            var methods = Element.model.getMethods();
+            for(var i=0;i<methods.length;i++){
+                var opt = document.createElement("option");
+                opt.text=methods[i];
+            mtdSelect.add(opt);
+            }
         }
+        
+        //Deve esconder as telas de edicao/criacao de atriutos/metodos
+        exibeElementos("0","0");
     }
     
     //Esta funcao exibe e registra os novos atributos e metodos das classes
@@ -352,7 +441,7 @@ and open the template in the editor.
         }
         //Caso o botao para inserir novo atributo seja selecionado, esvazia o div
         //E exibe a opcao com o novo atriuto
-        if(selection==="0"){
+        if(selection==="0"&&(selectedElement.get('type')==="uml.Class"||selectedElement.get('type')==='uml.Abstract')){
             var elem = document.getElementById("attDiv");
             elem.innerHTML="";
             elem.innerHTML=" NOME DO NOVO ATRIBUTO: <input id='novoAtt'/> <button onclick=newElemBtn('selectAtt')> OK </button>";
@@ -371,7 +460,7 @@ and open the template in the editor.
             var newSelec = document.getElementById(selection);
             var opt = document.createElement("option");
             var userInput = document.getElementById("novoAtt").value;
-            //A nova option sera o input do usuario
+            //A nova option sera o input do usuario'
             opt.text=userInput;
             //O novo atributo é o input do usuario
             selectedElement.addAttribute(userInput);
@@ -484,8 +573,7 @@ and open the template in the editor.
   
   <div id="contextToolBar"> 
         <p align="left">
-            <b>CONTEXT TOOLBAR</b><br/> <br/>
-            
+            <b>CONTEXT TOOLBAR</b><br/> <br/>   
             NOME: 
             <input type="text" id="nameText"/>
             <button  type="button" name="nameBtn" onclick="mudarNome()"> Modificar </button> 
@@ -524,5 +612,4 @@ and open the template in the editor.
    </script>
   
 </body>
-
 </html> 
