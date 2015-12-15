@@ -183,7 +183,7 @@ and open the template in the editor.
         //Se foi a terceira selecao e a associacao tiver sido selecionada, deve criar a instancia do link
         if(linkStatus===2&&linkSelected==="association"){
         
-        
+            //Caso se tente realizar  a associação com um elemento invalido, cancela a funcionalidade
             if(linkElement.get('type')==='uml.Interface'||cellView.model.get('type')==='uml.Interface')
                 return;
         
@@ -214,8 +214,6 @@ and open the template in the editor.
         else if(linkStatus===2&&linkSelected==="generalization"){
             
             //Valida se os elementos que se deseja conectar são válidos.
-            console.log(linkElement.get('type'));
-            console.log(cellView.model.get('type'));
             if(linkElement.id===cellView.model.id||(linkElement.get('type')==='uml.Class'&&cellView.model.get('type')==='uml.Interface')||
                     (linkElement.get('type')==='uml.Interface'&&cellView.model.get('type')==='uml.Class')||
                     (linkElement.get('type')==='uml.Abstract'&&cellView.model.get('type')==='uml.Interface')||
@@ -282,7 +280,7 @@ and open the template in the editor.
             element= new joint.shapes.uml.Class({
                 position: { x: 200, y:100 },
                 size: { width: 100, height: 100 },
-                name: 'my Class'
+                name: ['','my Class']
             });
         }
         if(elementType==="interface"){
@@ -388,13 +386,25 @@ and open the template in the editor.
         //Caso o usuario tenha clicado no espaco vazio, limpa os valores.
         if(Element===0){
             nameText.value="";
-            document.getElementById("selectAtt").innerHTML="";
-            var mtdSelect = document.getElementById("selectMtd").innerHTML="";
+            var selectAtt = document.getElementById("selectAtt")
+            selectAtt.innerHTML="";
+            selectAtt.disabled=true;
+            var mtdSelect = document.getElementById("selectMtd");
+            mtdSelect.innerHTML="";
+            mtdSelect.disabled=true;
+            var selectStereo = document.getElementById("selectStereo");
+            selectStereo.innerHTML="";
+            selectStereo.disabled=true;
+            
         }
          //Carrega os metodos e atributos da classe
         else if(Element.model.defaults.type==="uml.Class"){
-            nameText.value= Element.model.getClassName();
+            //Carrega o nome e estereotipo da classe
+            var name = Element.model.getClassName();
+            nameText.value= name[1];
+            //Carrega os atributos da classe
             var attSelect = document.getElementById("selectAtt");
+            attSelect.disabled=false;
             var attributes = Element.model.getAttributes();
             attSelect.innerHTML="";
             for(var i=0;i<attributes.length;i++){
@@ -403,8 +413,9 @@ and open the template in the editor.
                 attSelect.add(opt);
             }
             
-            //Atualiza a lista de metodos
+            //Carrega os metodos da classe
             var mtdSelect = document.getElementById("selectMtd");
+            mtdSelect.disabled=false;
             var methods = Element.model.getMethods();
             mtdSelect.innerHTML="";
             for(var i=0;i<methods.length;i++){
@@ -413,11 +424,51 @@ and open the template in the editor.
             mtdSelect.add(opt);
             }
             
+            //Carrega os estereotipos da classe
+            var stereoSelect = document.getElementById("selectStereo");
+            stereoSelect.disabled=false;
+            stereoSelect.innerHTML="<option id='none'>NENHUM</option><option id='boundary'>BOUNDARY</option><option id='entity'>ENTITY</option><option id='control'>CONTROL</option>";
         }
         
-        
         else{
-            nameText.value= Element.model.getClassName()[1];
+            var name = Element.model.getClassName();
+            nameText.value= name[1];
+           
+            if(selectedElement.get('type')==="uml.Abstract"){
+                var selection = document.getElementById("selectStereo");
+                var opt = document.createElement("option");
+                var textNode = document.createTextNode("Abstract");
+                opt.id="idAbstract";
+                opt.appendChild(textNode);
+                selection.appendChild(opt);
+                selection.selectedIndex=0; //MARRETADO PORQUE DEUS QUIS (E O LEANDRO ENSINOU - Mentira, ensinou não)                
+                selection.disabled=true;
+                
+                document.getElementById("selectAtt").disabled=false;
+                
+            }
+            else if(selectedElement.get('type')==="uml.Interface"){
+                var selection = document.getElementById("selectStereo");
+                var opt = document.createElement("option");
+                var textNode = document.createTextNode("Interface");
+                opt.id="idInterface";
+                opt.appendChild(textNode);
+                selection.appendChild(opt);
+                selection.selectedIndex=0; //MARRETADO PORQUE DEUS QUIS (E O LEANDRO ENSINOU - Mentira, ensinou não)                
+                selection.disabled=true;
+                
+            }
+            else {
+                var selection = document.getElementById("selectStereo");
+                var opt = document.createElement("option");
+                var textNode = document.createTextNode("");
+                opt.id="idEmpty";
+                opt.appendChild(textNode);
+                selection.appendChild(opt);
+                selection.selectedIndex=0; //MARRETADO PORQUE DEUS QUIS (E O LEANDRO ENSINOU - Mentira, ensinou não)                
+                selection.disabled=true;
+                
+            }
             //Atualiza a lista de metodos
             var mtdSelect = document.getElementById("selectMtd");
             var methods = Element.model.getMethods();
@@ -426,6 +477,7 @@ and open the template in the editor.
                 opt.text=methods[i];
             mtdSelect.add(opt);
             }
+            mtdSelect.disabled=false;
         }
         
         //Deve esconder as telas de edicao/criacao de atriutos/metodos
@@ -493,11 +545,29 @@ and open the template in the editor.
          for(var i=0;i<arrayBoxElements.length;i++){
              //console.log("retorno getclass name "+arrayBoxElements[i].getClassName());
              if(arrayBoxElements[i].id===selectedElement.id){
-                 arrayBoxElements[i].setClassName(name.value);
+                //Se for uma classe, modifica só a posicao que contem o nome e evita mudar o estereotipo da classe
+                if(selectedElement.get('type')==='uml.Class'){
+                    selectedElement.setClassName([selectedElement.getClassName()[0],name.value]);
+                } 
+                else
+                    arrayBoxElements[i].setClassName(name.value);
                  //arrayBoxElements[i].updateRectangles();
                  console.log(arrayBoxElements[i].getClassName());
              }
          }
+         
+    }
+    //Esta funcao muda o estereotipo do objeto selecionado
+    function mudarStereo(){
+        var select = document.getElementById("selectStereo");
+        if(selectedElement.get('type')==='uml.Class'){
+            if(select.selectedIndex===0)
+                selectedElement.setClassName(["",selectedElement.getClassName()[1]]);
+            else
+                selectedElement.setClassName(["<<"+select.options[select.selectedIndex].text+">>",selectedElement.getClassName()[1]]);
+        }
+        
+         
          
     }
     //Esta funcao edita o valor do elemento selecionado
@@ -507,7 +577,8 @@ and open the template in the editor.
             var div = document.getElementById("attDiv");
             var selection = document.getElementById("selectAtt");
             div.innerHTML="";
-            div.innerHTML=" EDITAR ATRIBUTO: <input id='novoAtt' value="+ selection.options[selection.selectedIndex].text +" /> <button onclick=editarValor('1')> OK </button>";
+            console.log(selection.options[selection.selectedIndex].text);
+            div.innerHTML=" EDITAR ATRIBUTO: <input id='novoAtt' value='"+ selection.options[selection.selectedIndex].text +"' /> <button onclick=editarValor('1')> OK </button>";
             exibeElementos("1","0");
         }
         //Confirma a edicao do atributo selecionado e modifica o array com os atributos na posicao correta
@@ -577,6 +648,9 @@ and open the template in the editor.
             NOME: 
             <input type="text" id="nameText"/>
             <button  type="button" name="nameBtn" onclick="mudarNome()"> Modificar </button> 
+            ESTEREOTIPO: 
+            <select id="selectStereo"> </select>
+            <button  type="button" name="stereoBtn" onclick="mudarStereo()"> Modificar </button> 
             <br/><br/>
             ATRIBUTO: 
             <select id="selectAtt">
@@ -585,11 +659,7 @@ and open the template in the editor.
             <button  type="button" name="nameBtn" onclick="deletarValor('0')"> Deletar </button> 
             <button  type="button" name="AttBtn" onclick="newElemBtn('0')"> Novo Atributo </button> 
         </p>
-        <div id="attDiv">
-            <!--NOME DO NOVO ATRIBUTO:
-            <input id="novoAtt"/>
-            <button onclick="newElemBtn('selectAtt')"> OK </button>-->
-        </div>
+        <div id="attDiv"></div>
         <p align="left">
             MÉTODO: 
             <select id="selectMtd">
@@ -599,11 +669,7 @@ and open the template in the editor.
             <button  type="button" name="AttBtn" onclick="newElemBtn('1')"> Novo Metodo </button> 
             <br/>
         </p>
-        <div id="mtdDiv">
-          <!--  NOME DO NOVO MÉTODO:
-            <input id="novoMtd"/>
-            <button onclick="newElemBtn('selectMtd')"> OK </button> -->
-        </div>
+        <div id="mtdDiv"> </div>
         
   </div>
   
