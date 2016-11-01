@@ -355,7 +355,7 @@ and open the template in the editor.
         return 0;
     }
     
-    //----------- Funcoes que envolvem a contextToolbar ficam abaixo -----------
+    //2.----------- Funcoes que envolvem a contextToolbar ficam abaixo -----------
     
     //Esta funcao exibe os elementos de criacao de novo metodo e novo atributo na tela
     function exibeElementos(att,mtd){
@@ -386,7 +386,7 @@ and open the template in the editor.
         //Caso o usuario tenha clicado no espaco vazio, limpa os valores.
         if(Element===0){
             nameText.value="";
-            var selectAtt = document.getElementById("selectAtt")
+            var selectAtt = document.getElementById("selectAtt");
             selectAtt.innerHTML="";
             selectAtt.disabled=true;
             var mtdSelect = document.getElementById("selectMtd");
@@ -640,9 +640,33 @@ and open the template in the editor.
             }
         }
     }
+      //3.--------------- Funcoes de integracao AJAX com Kuaba ficam abaixo--------------------
+      
+      //TODO
+      //UTLIZAR O KUABA COMO UMA ABA DE CONTEXTO SIMILAR A CONTEXTTOOLBAR
+      //CRIAR JSPs PARA PROCESSAR AS REQUISICOES
+    
+      
+      function funcaoDoida(){
+          var xhttp = new XMLHttpRequest();
+          xhttp.open("GET","kuabaserver",true);
+          xhttp.send();
+          
+          var ktb = document.getElementById("ktb");
+          ktb.innerHTML=xhttp.responseText;
+      }
+      
   </script>
   
+  
+  <div id="kuabaToolBar">
+      <button id="ktb" onclick="funcaoDoida()"> DO NOT PUSH THIS BUTTON! </button>  
+  </div>
+  
+  
   <div id="contextToolBar"> 
+      
+      
         <p align="left">
             <b>CONTEXT TOOLBAR</b><br/> <br/>   
             NOME: 
@@ -675,6 +699,8 @@ and open the template in the editor.
   
   <script type="text/javascript">
       exibeElementos("0","0");
+      
+      
    </script>
   
 </body>
